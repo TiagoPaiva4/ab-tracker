@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Upload, UserPlus, CheckCircle, XCircle, Trash2, Edit, Save, X } from 'lucide-react';
+import { Upload, UserPlus, CheckCircle, XCircle, Trash2, Edit, Save, X, ArrowLeft } from 'lucide-react';
 
 export default function EventDetails({ session }) {
   const { id } = useParams();
-  const navigate = useNavigate(); // Para redirecionar depois de apagar
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [attendees, setAttendees] = useState([]);
   
@@ -32,7 +32,6 @@ export default function EventDetails({ session }) {
     setEvent(eventData);
     setAttendees(attData || []);
 
-    // Inicializar os campos de edição com os dados atuais
     if (eventData) {
       setEditTitle(eventData.title);
       setEditDate(eventData.event_date);
@@ -52,7 +51,7 @@ export default function EventDetails({ session }) {
       alert('Erro ao atualizar: ' + error.message);
     } else {
       setEvent({ ...event, title: editTitle, event_date: editDate, description: editDesc });
-      setIsEditing(false); // Sair do modo de edição
+      setIsEditing(false);
     }
   };
 
@@ -64,7 +63,7 @@ export default function EventDetails({ session }) {
     if (error) {
       alert('Erro ao apagar: ' + error.message);
     } else {
-      navigate('/'); // Voltar ao Dashboard
+      navigate('/');
     }
   };
 
@@ -117,64 +116,62 @@ export default function EventDetails({ session }) {
 
   return (
     <div className="container">
+      
+      {/* ESTILOS LOCAIS PARA O BOTÃO VOLTAR */}
+      <style>{`
+        .btn-back {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: none;
+          border: none;
+          color: var(--color-text-light); /* Cinza por defeito */
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-bottom: 1.5rem;
+          padding: 0.5rem 0; /* Área de clique maior */
+        }
+        .btn-back:hover {
+          color: var(--color-primary); /* Vermelho no hover */
+          transform: translateX(-3px); /* Pequena animação para a esquerda */
+        }
+      `}</style>
+
+      {/* BOTÃO DE VOLTAR */}
+      <button onClick={() => navigate('/')} className="btn-back">
+        <ArrowLeft size={20} /> Voltar
+      </button>
+
       <div className="event-layout">
         
         {/* COLUNA ESQUERDA: Detalhes, Edição e Fotos */}
         <div style={{display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
           
-          {/* Painel de Informação (Com Modo de Edição) */}
           <div className="info-panel" style={{ position: 'relative' }}>
             
-            {/* Botões de Ação (Só aparecem se houver sessão) */}
             {session && !isEditing && (
               <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-                <button 
-                  onClick={() => setIsEditing(true)} 
-                  className="status-button"
-                  style={{ backgroundColor: '#f3f4f6', color: '#4b5563' }}
-                  title="Editar Evento"
-                >
+                <button onClick={() => setIsEditing(true)} className="status-button" style={{ backgroundColor: '#f3f4f6', color: '#4b5563' }} title="Editar Evento">
                   <Edit size={16} />
                 </button>
-                <button 
-                  onClick={handleDeleteEvent} 
-                  className="status-button"
-                  style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}
-                  title="Apagar Evento"
-                >
+                <button onClick={handleDeleteEvent} className="status-button" style={{ backgroundColor: '#fee2e2', color: '#ef4444' }} title="Apagar Evento">
                   <Trash2 size={16} />
                 </button>
               </div>
             )}
 
             {isEditing ? (
-              /* --- MODO DE EDIÇÃO --- */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <label className="text-sm font-semibold">Título</label>
-                <input 
-                  className="input-field" 
-                  value={editTitle} 
-                  onChange={e => setEditTitle(e.target.value)} 
-                  style={{ marginBottom: 0 }}
-                />
+                <input className="input-field" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={{ marginBottom: 0 }} />
                 
                 <label className="text-sm font-semibold">Data</label>
-                <input 
-                  type="date" 
-                  className="input-field" 
-                  value={editDate} 
-                  onChange={e => setEditDate(e.target.value)} 
-                  style={{ marginBottom: 0 }}
-                />
+                <input type="date" className="input-field" value={editDate} onChange={e => setEditDate(e.target.value)} style={{ marginBottom: 0 }} />
 
                 <label className="text-sm font-semibold">Descrição</label>
-                <textarea 
-                  className="input-field" 
-                  rows="3" 
-                  value={editDesc} 
-                  onChange={e => setEditDesc(e.target.value)} 
-                  style={{ marginBottom: 0 }}
-                />
+                <textarea className="input-field" rows="3" value={editDesc} onChange={e => setEditDesc(e.target.value)} style={{ marginBottom: 0 }} />
 
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                   <button onClick={handleUpdateEvent} className="btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
@@ -186,7 +183,6 @@ export default function EventDetails({ session }) {
                 </div>
               </div>
             ) : (
-              /* --- MODO DE VISUALIZAÇÃO --- */
               <>
                 <h1 style={{fontSize: '2rem', marginBottom: '0.25rem', paddingRight: '4rem'}}>{event.title}</h1>
                 <p style={{color: 'var(--color-primary)', fontWeight: '600', marginBottom: '1rem'}}>{new Date(event.event_date).toLocaleDateString()}</p>
@@ -195,7 +191,6 @@ export default function EventDetails({ session }) {
             )}
           </div>
 
-          {/* Galeria */}
           <div className="info-panel">
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
                   <h3 style={{fontSize: '1.25rem'}}>Fotos</h3>
@@ -226,14 +221,7 @@ export default function EventDetails({ session }) {
           
           {session && (
               <div className="attendee-input-group">
-                  <input 
-                      className="input-field" 
-                      style={{marginBottom: 0, flexGrow: 1}}
-                      placeholder="Adicionar extra..." 
-                      value={newAttendee}
-                      onChange={e => setNewAttendee(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && addAttendee()}
-                  />
+                  <input className="input-field" style={{marginBottom: 0, flexGrow: 1}} placeholder="Adicionar extra..." value={newAttendee} onChange={e => setNewAttendee(e.target.value)} onKeyDown={e => e.key === 'Enter' && addAttendee()} />
                   <button onClick={addAttendee} className="btn-primary" style={{width: 'auto', padding: '0.5rem', minWidth: '40px'}}><UserPlus size={20}/></button>
               </div>
           )}
@@ -244,21 +232,13 @@ export default function EventDetails({ session }) {
                       <span className="font-semibold">{att.name}</span>
                       
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <button 
-                            onClick={() => toggleStatus(att.id, att.status)}
-                            disabled={!session}
-                            className={`status-button ${att.status === 'Presente' ? 'status-present' : 'status-absent'}`}
-                        >
+                        <button onClick={() => toggleStatus(att.id, att.status)} disabled={!session} className={`status-button ${att.status === 'Presente' ? 'status-present' : 'status-absent'}`}>
                             {att.status === 'Presente' ? <CheckCircle size={14}/> : <XCircle size={14}/>}
                             {att.status}
                         </button>
 
                         {session && (
-                            <button 
-                                onClick={() => deleteAttendee(att.id)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '0.25rem' }}
-                                title="Remover da lista"
-                            >
+                            <button onClick={() => deleteAttendee(att.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', padding: '0.25rem' }} title="Remover da lista">
                                 <Trash2 size={18} className="hover:text-red-500" />
                             </button>
                         )}
