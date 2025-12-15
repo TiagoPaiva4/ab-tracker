@@ -314,6 +314,34 @@ body {
     background-color: #fecaca;
 }
 
+
+/* AJUSTES ESPECÍFICOS PARA MOBILE (Tabela Centrada) */
+@media (max-width: 1023px) {
+    /* Forçar a tabela a centrar o texto */
+    table th, table td {
+        text-align: center !important;
+    }
+
+    /* Ajustar a primeira coluna (Nome + Medalha) para alinhar ao centro */
+    /* Como o emoji e o nome são texto, o text-align center acima deve tratar de tudo,
+       mas vamos garantir que o padding não atrapalha */
+    table td:first-child, table th:first-child {
+        padding-left: 0.5rem;
+    }
+    
+    /* Garantir que o container da tabela ocupa a largura toda e centra-se */
+    .dashboard-grid > div:first-child {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .dashboard-grid > div:first-child > div {
+        width: 100%; /* A caixa branca da tabela */
+    }
+}
+
 /* Helpers */
 .flex-center { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
 .text-center { text-align: center; }
