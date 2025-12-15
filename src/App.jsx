@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import CreateEvent from './pages/CreateEvent';
 import EventDetails from './pages/EventDetails';
+import Album from './pages/Album'; // <--- 1. IMPORTAR AQUI
 
 function App() {
   const [session, setSession] = useState(null);
@@ -22,6 +23,7 @@ function App() {
         <Navbar session={session} />
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/album" element={<Album />} /> {/* <--- 2. NOVA ROTA AQUI */}
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/create" element={session ? <CreateEvent session={session} /> : <Navigate to="/login" />} />
           <Route path="/event/:id" element={<EventDetails session={session} />} />

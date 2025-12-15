@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, PlusCircle, LayoutDashboard, LogIn } from 'lucide-react'; // Adicionei LogIn
+import { LogOut, PlusCircle, LayoutDashboard, LogIn, Image } from 'lucide-react'; // <--- Importar 'Image'
 import { supabase } from '../lib/supabaseClient';
 import logo from '../assets/logo-ab.png';
 
@@ -23,18 +23,26 @@ export default function Navbar({ session }) {
         <div className="navbar-links">
           {session ? (
             <>
+              {/* Botão Dashboard */}
               <Link to="/" className="navbar-link">
                 <LayoutDashboard size={18}/> <span className="hidden sm:inline">Dashboard</span>
               </Link>
+
+              {/* NOVO: Botão Álbum */}
+              <Link to="/album" className="navbar-link">
+                <Image size={18}/> <span className="hidden sm:inline">Álbum</span>
+              </Link>
+
+              {/* Botão Novo Evento */}
               <Link to="/create" className="btn-new-event">
                 <PlusCircle size={18}/> <span className="hidden sm:inline">Novo Evento</span>
               </Link>
+              
               <button onClick={handleLogout} className="btn-logout">
                 <LogOut size={18}/>
               </button>
             </>
           ) : (
-            /* BOTÃO LOGIN ALTERADO */
             <Link to="/login" className="btn-new-event">
                <LogIn size={18}/> Login
             </Link>
