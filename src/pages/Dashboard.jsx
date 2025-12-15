@@ -1,43 +1,45 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Trophy, ChevronDown } from 'lucide-react'; // Adicionei ChevronDown
-
-const GROUP_MEMBERS = [
-  "Paiva", "André Nuno", "André Carvalho", "Gui Costa",
-  "Didi", "JP", "Emídio", "Pedro",
-  "Passinhas", "Adri", "Edu", "Gustavo"
-];
+import { Calendar, Users, Trophy, ChevronDown } from 'lucide-react';
 
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
-  const [visibleCount, setVisibleCount] = useState(9); // PAGINAÇÃO: Começa com 9 eventos
+  const [visibleCount, setVisibleCount] = useState(9);
 
   useEffect(() => {
-    fetchEvents();
+    fetchData();
   }, []);
 
-  const fetchEvents = async () => {
-    const { data } = await supabase
+  const fetchData = async () => {
+    // 1. Buscar membros para a base do Ranking
+    const { data: members } = await supabase.from('members').select('name');
+    const memberNames = members ? members.map(m => m.name) : [];
+
+    // 2. Buscar Eventos e Participantes
+    const { data: eventsData } = await supabase
       .from('events')
       .select('*, attendees(name, status)') 
       .order('event_date', { ascending: false });
       
-    if (data) {
-      setEvents(data);
-      calculateLeaderboard(data);
+    if (eventsData) {
+      setEvents(eventsData);
+      calculateLeaderboard(eventsData, memberNames);
     }
   };
 
-  const calculateLeaderboard = (eventsData) => {
+  const calculateLeaderboard = (eventsData, allMembers) => {
     const counts = {};
-    GROUP_MEMBERS.forEach(member => counts[member] = 0);
+    
+    // Inicializar todos os membros da BD com 0
+    allMembers.forEach(name => counts[name] = 0);
 
     eventsData.forEach(event => {
       if (event.attendees) {
         event.attendees.forEach(att => {
           if (att.status === 'Presente') {
+            // Soma ao existente ou cria novo se for um nome antigo que já não está na tabela members
             counts[att.name] = (counts[att.name] || 0) + 1;
           }
         });
@@ -52,14 +54,12 @@ export default function Dashboard() {
   };
 
   const loadMore = () => {
-    setVisibleCount(prev => prev + 9); // Carrega mais 9 eventos
+    setVisibleCount(prev => prev + 9);
   };
 
   return (
     <div className="container">
-      
       <div className="dashboard-grid">
-
         {/* COLUNA ESQUERDA: Tabela */}
         <div>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
@@ -106,11 +106,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* COLUNA DIREITA: Lista de Eventos (COM PAGINAÇÃO) */}
+        {/* COLUNA DIREITA: Lista de Eventos */}
         <div>
           <h1 className="text-2xl font-bold mb-6">Eventos Recentes</h1>
           <div className="events-grid">
-            {/* Apenas mostramos os eventos até ao limite 'visibleCount' */}
             {events.slice(0, visibleCount).map((event) => {
               const presentCount = event.attendees 
                 ? event.attendees.filter(a => a.status === 'Presente').length 
@@ -123,48 +122,30 @@ export default function Dashboard() {
                   )}
                   <div className="event-card-content">
                     <h3 className="event-card-title">{event.title}</h3>
-                    
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                       <div className="event-card-date" style={{ marginBottom: 0 }}>
                         <Calendar size={16} className="mr-2" />
                         {new Date(event.event_date).toLocaleDateString('pt-PT')}
                       </div>
-
-                      <div style={{ 
-                        display: 'flex', alignItems: 'center', gap: '0.25rem', 
-                        backgroundColor: 'var(--color-primary-light)', 
-                        color: 'var(--color-primary)', 
-                        padding: '0.25rem 0.5rem', borderRadius: '999px',
-                        fontSize: '0.75rem', fontWeight: 'bold'
-                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold' }}>
                         <Users size={14} />
                         <span>{presentCount}</span>
                       </div>
                     </div>
-
-                    <Link to={`/event/${event.id}`} className="btn-details">
-                      Ver Detalhes
-                    </Link>
+                    <Link to={`/event/${event.id}`} className="btn-details">Ver Detalhes</Link>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          {/* BOTÃO VER MAIS */}
           {visibleCount < events.length && (
             <div className="text-center mt-8">
-              <button 
-                onClick={loadMore}
-                className="btn-primary"
-                style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', paddingLeft: '2rem', paddingRight: '2rem' }}
-              >
+              <button onClick={loadMore} className="btn-primary" style={{ width: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', paddingLeft: '2rem', paddingRight: '2rem' }}>
                 Ver Mais Eventos <ChevronDown size={18}/>
               </button>
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
