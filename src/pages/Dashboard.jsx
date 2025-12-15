@@ -31,8 +31,10 @@ export default function Dashboard() {
 
   const calculateLeaderboard = (eventsData) => {
     const counts = {};
+    // Inicializar a zero
     GROUP_MEMBERS.forEach(member => counts[member] = 0);
 
+    // Contar presenças
     eventsData.forEach(event => {
       if (event.attendees) {
         event.attendees.forEach(att => {
@@ -43,6 +45,7 @@ export default function Dashboard() {
       }
     });
 
+    // Ordenar
     const sorted = Object.entries(counts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
@@ -53,7 +56,7 @@ export default function Dashboard() {
   return (
     <div className="container">
       
-      {/* WRAPPER NOVO: Controla o layout Esquerda/Direita */}
+      {/* WRAPPER NOVO: Controla o layout Esquerda/Direita via CSS (dashboard-grid) */}
       <div className="dashboard-grid">
 
         {/* COLUNA ESQUERDA: Tabela de Assiduidade */}
@@ -78,6 +81,7 @@ export default function Dashboard() {
                     
                     let rowClass = "hover:bg-slate-50 transition";
                     let badge = null;
+                    // Medalhas para o Top 3
                     if (index === 0) badge = "🥇";
                     else if (index === 1) badge = "🥈";
                     else if (index === 2) badge = "🥉";
@@ -87,7 +91,7 @@ export default function Dashboard() {
                         <td className="p-4 font-medium text-slate-800 text-sm">
                           {badge} {item.name}
                         </td>
-                        <td className="p-4 text-center font-bold text-indigo-600 text-sm">
+                        <td className="p-4 text-center font-bold" style={{ color: 'var(--color-primary)' }}>
                           {item.count}
                         </td>
                         <td className="p-4 text-center text-slate-500 text-xs">
@@ -107,6 +111,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold mb-6">Eventos Recentes</h1>
           <div className="events-grid">
             {events.map((event) => {
+              // Contar quantos estão "Presente" neste evento
               const presentCount = event.attendees 
                 ? event.attendees.filter(a => a.status === 'Presente').length 
                 : 0;
@@ -125,9 +130,11 @@ export default function Dashboard() {
                         {new Date(event.event_date).toLocaleDateString('pt-PT')}
                       </div>
 
+                      {/* Contador de Presenças com a cor do tema */}
                       <div style={{ 
                         display: 'flex', alignItems: 'center', gap: '0.25rem', 
-                        backgroundColor: '#e0e7ff', color: 'var(--color-primary)', 
+                        backgroundColor: 'var(--color-primary-light)', // Vermelho claro do tema
+                        color: 'var(--color-primary)', // Vermelho escuro do tema
                         padding: '0.25rem 0.5rem', borderRadius: '999px',
                         fontSize: '0.75rem', fontWeight: 'bold'
                       }}>
