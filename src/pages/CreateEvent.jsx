@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Upload, Users, CheckSquare, Square } from 'lucide-react';
 
-// A lista fixa dos teus 12 participantes
 const GROUP_MEMBERS = [
   "Paiva", "André Nuno", "André Carvalho", "Gui Costa",
   "Didi", "JP", "Emídio", "Pedro",
@@ -15,12 +14,10 @@ export default function CreateEvent({ session }) {
   const [date, setDate] = useState('');
   const [desc, setDesc] = useState('');
   const [file, setFile] = useState(null);
-  // Agora o estado é um array de nomes selecionados
   const [selectedParticipants, setSelectedParticipants] = useState([]); 
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Função para adicionar/remover um nome da lista
   const toggleParticipant = (name) => {
     if (selectedParticipants.includes(name)) {
       setSelectedParticipants(prev => prev.filter(p => p !== name));
@@ -29,12 +26,11 @@ export default function CreateEvent({ session }) {
     }
   };
 
-  // Função para selecionar/desmarcar todos
   const toggleAll = () => {
     if (selectedParticipants.length === GROUP_MEMBERS.length) {
-      setSelectedParticipants([]); // Desmarcar todos
+      setSelectedParticipants([]); 
     } else {
-      setSelectedParticipants([...GROUP_MEMBERS]); // Selecionar todos
+      setSelectedParticipants([...GROUP_MEMBERS]); 
     }
   };
 
@@ -56,7 +52,7 @@ export default function CreateEvent({ session }) {
       if (eventError) throw eventError;
       const eventId = eventData.id;
 
-      // 2. Upload Foto (se existir)
+      // 2. Upload Foto
       if (file) {
         const fileName = `${eventId}/${Date.now()}-${file.name}`;
         const { error: uploadError } = await supabase.storage
@@ -72,12 +68,12 @@ export default function CreateEvent({ session }) {
         }
       }
 
-      // 3. Adicionar Participantes Selecionados
+      // 3. Adicionar Participantes (COMO PRESENTE)
       if (selectedParticipants.length > 0) {
         const attendeesData = selectedParticipants.map(name => ({
           event_id: eventId,
           name: name,
-          status: 'Ausente' // Todos começam como ausentes, depois marcas a presença
+          status: 'Presente' // <--- MUDANÇA AQUI: Quem selecionas fica logo Presente
         }));
 
         const { error: attError } = await supabase.from('attendees').insert(attendeesData);
@@ -94,25 +90,22 @@ export default function CreateEvent({ session }) {
   };
 
   return (
-    <div className="container" style={{ display: 'flex', justifyContent: 'center' }}>
+    <div className="container flex-center">
       <div className="form-container" style={{ maxWidth: '600px', width: '100%' }}>
-        <h1 className="text-center" style={{marginBottom: '1.5rem'}}>Criar Novo Evento</h1>
+        <h1 className="text-center mb-6">Criar Novo Evento</h1>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
-          {/* Título */}
           <div>
             <label className="text-sm font-semibold mb-1 block">Título</label>
             <input required type="text" className="input-field" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Futebol de 5ª Feira"/>
           </div>
 
-          {/* Data */}
           <div>
             <label className="text-sm font-semibold mb-1 block">Data</label>
             <input required type="date" className="input-field" value={date} onChange={e => setDate(e.target.value)} />
           </div>
 
-          {/* Foto */}
           <div>
             <label className="text-sm font-semibold mb-1 block">Foto de Capa</label>
             <label className="input-field" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#6b7280' }}>
@@ -122,7 +115,6 @@ export default function CreateEvent({ session }) {
             </label>
           </div>
 
-          {/* Seleção de Participantes */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <label className="text-sm font-semibold block">Participantes ({selectedParticipants.length})</label>
@@ -170,7 +162,6 @@ export default function CreateEvent({ session }) {
             </div>
           </div>
 
-          {/* Descrição */}
           <div>
             <label className="text-sm font-semibold mb-1 block">Descrição</label>
             <textarea className="input-field" rows="3" value={desc} onChange={e => setDesc(e.target.value)} />

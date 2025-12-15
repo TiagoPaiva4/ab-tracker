@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Upload, UserPlus, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, UserPlus, CheckCircle, XCircle, Trash2 } from 'lucide-react'; // Adicionei Trash2
 
 export default function EventDetails({ session }) {
   const { id } = useParams();
@@ -23,17 +23,56 @@ export default function EventDetails({ session }) {
 
   const addAttendee = async () => {
     if (!newAttendee.trim()) return;
-    await supabase.from('attendees').insert([{ event_id: id, name: newAttendee, status: 'Ausente' }]);
-    setNewAttendee('');
-    fetchData();
+    
+    const { error } = await supabase.from('attendees').insert([{ 
+        event_id: id, 
+        name: newAttendee, 
+        status: 'Presente' 
+    }]);
+
+    if (error) {
+        alert('Erro ao adicionar: ' + error.message);
+    } else {
+        setNewAttendee('');
+        fetchData();
+    }
+  };
+
+  // NOVA FUNÇÃO: Apagar Participante
+  const deleteAttendee = async (attId) => {
+    if (!window.confirm("Tens a certeza que queres remover esta pessoa da lista?")) return;
+
+    const { error } = await supabase
+        .from('attendees')
+        .delete()
+        .eq('id', attId);
+
+    if (error) {
+        alert("Erro ao apagar: " + error.message);
+    } else {
+        // Remove da lista visualmente
+        setAttendees(attendees.filter(a => a.id !== attId));
+    }
   };
 
   const toggleStatus = async (attId, currentStatus) => {
     if (!session) return; 
+    
     const newStatus = currentStatus === 'Presente' ? 'Ausente' : 'Presente';
-    await supabase.from('attendees').update({ status: newStatus }).eq('id', attId);
-    // Optimistic update
+    
+    // Atualização Otimista
     setAttendees(attendees.map(a => a.id === attId ? { ...a, status: newStatus } : a));
+
+    const { error } = await supabase
+        .from('attendees')
+        .update({ status: newStatus })
+        .eq('id', attId);
+
+    if (error) {
+        console.error("Erro update:", error);
+        alert("Erro ao atualizar presença.");
+        setAttendees(attendees.map(a => a.id === attId ? { ...a, status: currentStatus } : a));
+    }
   };
 
   const handlePhotoUpload = async (e) => {
@@ -52,6 +91,8 @@ export default function EventDetails({ session }) {
       if (!updateError) {
           setEvent({ ...event, photos: [...currentPhotos, publicUrl] });
       }
+    } else {
+        alert("Erro no upload: " + error.message);
     }
     setUploading(false);
   };
@@ -69,7 +110,6 @@ export default function EventDetails({ session }) {
               <p style={{color: '#4b5563'}}>{event.description || "Sem descrição."}</p>
           </div>
 
-          {/* Galeria */}
           <div className="info-panel">
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
                   <h3 style={{fontSize: '1.25rem'}}>Fotos</h3>
@@ -103,7 +143,7 @@ export default function EventDetails({ session }) {
                   <input 
                       className="input-field" 
                       style={{marginBottom: 0, flexGrow: 1}}
-                      placeholder="Nome do participante" 
+                      placeholder="Adicionar extra..." 
                       value={newAttendee}
                       onChange={e => setNewAttendee(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && addAttendee()}
@@ -116,14 +156,34 @@ export default function EventDetails({ session }) {
               {attendees.map(att => (
                   <div key={att.id} className="attendee-item">
                       <span className="font-semibold">{att.name}</span>
-                      <button 
-                          onClick={() => toggleStatus(att.id, att.status)}
-                          disabled={!session}
-                          className={`status-button ${att.status === 'Presente' ? 'status-present' : 'status-absent'}`}
-                      >
-                          {att.status === 'Presente' ? <CheckCircle size={14}/> : <XCircle size={14}/>}
-                          {att.status}
-                      </button>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button 
+                            onClick={() => toggleStatus(att.id, att.status)}
+                            disabled={!session}
+                            className={`status-button ${att.status === 'Presente' ? 'status-present' : 'status-absent'}`}
+                        >
+                            {att.status === 'Presente' ? <CheckCircle size={14}/> : <XCircle size={14}/>}
+                            {att.status}
+                        </button>
+
+                        {/* Botão de Apagar (Lixo) */}
+                        {session && (
+                            <button 
+                                onClick={() => deleteAttendee(att.id)}
+                                style={{ 
+                                    background: 'none', 
+                                    border: 'none', 
+                                    cursor: 'pointer', 
+                                    color: '#9ca3af',
+                                    padding: '0.25rem'
+                                }}
+                                title="Remover da lista"
+                            >
+                                <Trash2 size={18} className="hover:text-red-500 transition-colors" />
+                            </button>
+                        )}
+                      </div>
                   </div>
               ))}
               {attendees.length === 0 && <p className="text-center text-slate-400 py-3">Ainda ninguém registado.</p>}
