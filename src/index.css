@@ -340,3 +340,21 @@ h3 { font-size: 1.25rem; font-weight: bold; }
 .font-semibold { font-weight: 600; }
 .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 .text-slate-400 { color: #9ca3af; }
+
+/* Layout do Dashboard */
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Apenas em Desktop (largura maior que 1024px) */
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        display: grid;
+        /* Coluna 1 (Tabela): 350px fixos | Coluna 2 (Eventos): O resto do espaço */
+        grid-template-columns: 350px 1fr; 
+        align-items: start; /* Para a tabela não esticar em altura */
+        gap: 3rem;
+    }
+}
