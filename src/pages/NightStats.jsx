@@ -170,9 +170,9 @@ export default function NightStats({ session }) {
       {/* HEADER */}
       <div className="page-header">
         <h1 className="page-title">
-          <Beer size={36} className="text-amber-500" /> Liga dos Copos
+          <Beer size={36} className="text-amber-500" /> Liga Rei do Álcool
         </h1>
-        <p className="text-slate-500 mt-2 font-medium">Quem é o rei da noite?</p>
+        <p className="text-slate-500 mt-2 font-medium">Maior bêbado do AB</p>
       </div>
 
       {/* RANKING (SCROLL HORIZONTAL) */}
