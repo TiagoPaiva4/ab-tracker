@@ -21,18 +21,21 @@ function App() {
   }, []);
 
   return (
-    <HashRouter>
+    // Adicionei as flags 'future' para remover os avisos amarelos da consola
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="min-h-screen bg-slate-50 pb-10">
         <Navbar session={session} />
         <Routes>
           <Route path="/" element={<Dashboard session={session} />} />
           <Route path="/album" element={<Album />} />
           <Route path="/members" element={session ? <Members session={session} /> : <Navigate to="/login" />} />
-          <Route path="/profile/:name" element={<MemberProfile />} /> {/* <--- 2. NOVA ROTA */}
+          <Route path="/profile/:name" element={<MemberProfile />} />
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/create" element={session ? <CreateEvent session={session} /> : <Navigate to="/login" />} />
           <Route path="/event/:id" element={<EventDetails session={session} />} />
-          <Route path="/nightstats" element={<NightStats session={session} />} />
+          
+          {/* CORREÇÃO AQUI: Mudei de "/nightstats" para "/night" para bater certo com a Navbar */}
+          <Route path="/night" element={<NightStats session={session} />} />
         </Routes>
       </div>
     </HashRouter>
