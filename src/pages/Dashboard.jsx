@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, Trophy, ChevronDown, Moon, Beer, Plus, RotateCcw } from 'lucide-react';
+import { Calendar, Users, Trophy, ChevronDown, Moon, Beer, Plus, RotateCcw, Flame } from 'lucide-react';
 
 const GROUP_MEMBERS = [
   "Paiva", "André Nuno", "André Carvalho", "Gui Costa",
@@ -15,6 +15,9 @@ export default function Dashboard({ session }) {
   const [allMembers, setAllMembers] = useState([]); 
   const [visibleCount, setVisibleCount] = useState(9);
   
+  // Novo Estado: Maior Streak
+  const [topStreak, setTopStreak] = useState({ name: '-', count: 0 });
+
   // Estados para o Gustavo
   const [gustavoHours, setGustavoHours] = useState(0); 
   const [gustavoShots, setGustavoShots] = useState(0); 
@@ -32,11 +35,11 @@ export default function Dashboard({ session }) {
     const { data: eventsData } = await supabase
       .from('events')
       .select('*, attendees(name, status)') 
-      .order('event_date', { ascending: false });
+      .order('event_date', { ascending: false }); // Do mais recente para o mais antigo
       
     if (eventsData) {
       setEvents(eventsData);
-      calculateLeaderboard(eventsData, memberNames.length > 0 ? memberNames : GROUP_MEMBERS);
+      calculateStats(eventsData, memberNames.length > 0 ? memberNames : GROUP_MEMBERS);
     }
   };
 
@@ -52,22 +55,18 @@ export default function Dashboard({ session }) {
 
   const handleAction = async (action) => {
     if (!session) return;
-
     let newHours = gustavoHours;
     let newShots = gustavoShots;
 
-    if (action === 'SLEEP') {
-      newHours += 1;
-    } else if (action === 'DRINK') {
+    if (action === 'SLEEP') newHours += 1;
+    else if (action === 'DRINK') {
       if (newHours > 0) newHours -= 1;
       newShots += 1;
-    } else if (action === 'UNDO_SLEEP') {
-       newHours -= 1;
-    } else if (action === 'UNDO_DRINK') {
+    } else if (action === 'UNDO_SLEEP') newHours -= 1;
+    else if (action === 'UNDO_DRINK') {
        newHours += 1;
        newShots -= 1;
     }
-
     setGustavoHours(newHours);
     setGustavoShots(newShots);
 
@@ -77,20 +76,57 @@ export default function Dashboard({ session }) {
     ]);
   };
 
-  const calculateLeaderboard = (eventsData, allMemberNames) => {
+  const calculateStats = (eventsData, allMemberNames) => {
+    // 1. Calcular Totais (Leaderboard)
     const counts = {};
     allMemberNames.forEach(name => counts[name] = 0);
+
+    // 2. Preparar cálculo de Streak
+    const streaks = {};
+    allMemberNames.forEach(name => streaks[name] = { count: 0, active: true });
+
     eventsData.forEach(event => {
+      // Criar um Set com quem foi a este evento
+      const presentSet = new Set();
       if (event.attendees) {
         event.attendees.forEach(att => {
-          if (att.status === 'Presente') counts[att.name] = (counts[att.name] || 0) + 1;
+          if (att.status === 'Presente') presentSet.add(att.name);
         });
       }
+
+      // Atualizar contagens e streaks de cada membro
+      allMemberNames.forEach(name => {
+        const isPresent = presentSet.has(name);
+        
+        // Contagem Total
+        if (isPresent) counts[name]++;
+
+        // Streak (só incrementa se a streak ainda estiver ativa)
+        if (streaks[name].active) {
+          if (isPresent) {
+            streaks[name].count++;
+          } else {
+            // Se faltou, a streak quebra aqui (paramos de contar para trás)
+            streaks[name].active = false;
+          }
+        }
+      });
     });
+
+    // Ordenar Leaderboard
     const sorted = Object.entries(counts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count);
     setLeaderboard(sorted);
+
+    // Encontrar a Maior Streak
+    let bestStreak = { name: '-', count: 0 };
+    Object.entries(streaks).forEach(([name, data]) => {
+      if (data.count > bestStreak.count) {
+        bestStreak = { name: name, count: data.count };
+      }
+    });
+    setTopStreak(bestStreak);
   };
 
   const loadMore = () => setVisibleCount(prev => prev + 9);
@@ -108,72 +144,42 @@ export default function Dashboard({ session }) {
       <style>{`
         .member-link-item:hover { background-color: #f8fafc; transform: translateX(4px); }
         
-        /* ESTILO DOS CARTÕES */
+        /* ESTILO DOS CARTÕES GUSTAVO */
         .counter-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 1rem;
-            padding: 1rem; /* Compacto */
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            position: relative; overflow: hidden; border-radius: 1rem; padding: 1rem; color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; justify-content: space-between;
         }
-        
         .bg-sleep { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
         .bg-shots { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
-        
         .counter-value { font-size: 2.5rem; font-weight: 800; line-height: 1; }
         .counter-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9; font-weight: bold; margin-bottom: 0.5rem;}
-        
-        /* Ícone de fundo subtil */
         .icon-bg { position: absolute; right: -10px; bottom: -10px; opacity: 0.15; transform: rotate(-15deg); }
 
-        /* BOTÕES ESTILIZADOS MAS PEQUENOS */
-        .btn-glass-small {
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .btn-glass-small:hover {
-            background: rgba(255, 255, 255, 0.4);
-            transform: translateY(-1px);
-        }
-        .btn-glass-small:active {
-            transform: scale(0.98);
+        /* ESTILO DO CARTÃO STREAK */
+        .streak-card {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white; padding: 1rem; border-radius: 1rem; margin-top: 1rem;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.2);
         }
 
+        /* BOTÕES */
+        .btn-glass-small {
+            background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.3); color: white;
+            padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem;
+        }
+        .btn-glass-small:hover { background: rgba(255, 255, 255, 0.4); transform: translateY(-1px); }
         .btn-icon-only {
-            padding: 0.4rem;
-            background: rgba(0,0,0,0.15);
-            border: none;
-            border-radius: 0.5rem;
-            color: rgba(255,255,255,0.8);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            padding: 0.4rem; background: rgba(0,0,0,0.15); border: none; border-radius: 0.5rem; color: rgba(255,255,255,0.8);
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
         }
-        .btn-icon-only:hover {
-            background: rgba(0,0,0,0.3);
-            color: white;
-        }
+        .btn-icon-only:hover { background: rgba(0,0,0,0.3); color: white; }
       `}</style>
 
       <div className="dashboard-grid">
         
-        {/* COLUNA 1: Tabela + CONTADORES */}
+        {/* COLUNA 1: Tabela + STREAK + CONTADORES */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Tabela de Assiduidade */}
@@ -210,60 +216,58 @@ export default function Dashboard({ session }) {
                   </tbody>
                 </table>
               </div>
+
+              {/* NOVO: ESTATÍSTICA DE STREAK (Dentro do bloco, ou logo abaixo) */}
+              <div className="streak-card">
+                  <div className="flex items-center gap-3">
+                      <div className="bg-white/20 p-2 rounded-full">
+                          <Flame size={24} fill="white" strokeWidth={0} />
+                      </div>
+                      <div>
+                          <div className="text-xs font-bold uppercase opacity-90">Maior Streak Atual</div>
+                          <div className="text-xl font-bold">{topStreak.name}</div>
+                      </div>
+                  </div>
+                  <div className="text-3xl font-black">{topStreak.count}🔥</div>
+              </div>
+
             </div>
           </div>
 
           {/* CONTADORES GUSTAVO */}
           <div>
-            {/* TÍTULO COM MARGIN BOTTOM (Separado das boxs) */}
             <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800 border-b border-slate-200 pb-2">
               😴 Banco do Gustavo
             </h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                
-                {/* 1. CARTÃO SONO */}
                 <div className="counter-card bg-sleep">
                     <Moon size={60} className="icon-bg" />
-                    
                     <div className="z-10">
                         <div className="counter-label">Dívida (Horas)</div>
                         <div className="counter-value">{gustavoHours}h</div>
                     </div>
-                    
                     {session && (
                         <div className="mt-4 flex gap-2 z-10">
-                             <button onClick={() => handleAction('SLEEP')} className="btn-glass-small" style={{ flex: 1, justifyContent: 'center' }}>
-                                <Plus size={16} /> Dormiu
-                             </button>
-                             <button onClick={() => handleAction('UNDO_SLEEP')} className="btn-icon-only" title="Corrigir (-1)">
-                                <RotateCcw size={14} />
-                             </button>
+                             <button onClick={() => handleAction('SLEEP')} className="btn-glass-small" style={{ flex: 1, justifyContent: 'center' }}><Plus size={16} /> Dormiu</button>
+                             <button onClick={() => handleAction('UNDO_SLEEP')} className="btn-icon-only" title="Corrigir (-1)"><RotateCcw size={14} /></button>
                         </div>
                     )}
                 </div>
 
-                {/* 2. CARTÃO SHOTS */}
                 <div className="counter-card bg-shots">
                     <Beer size={60} className="icon-bg" />
-                    
                     <div className="z-10">
                         <div className="counter-label">Shots Pagos</div>
                         <div className="counter-value">{gustavoShots}</div>
                     </div>
-
                     {session && (
                         <div className="mt-4 flex gap-2 z-10">
-                             <button onClick={() => handleAction('DRINK')} className="btn-glass-small" style={{ flex: 1, justifyContent: 'center' }}>
-                                <Plus size={16} /> Shot
-                             </button>
-                             <button onClick={() => handleAction('UNDO_DRINK')} className="btn-icon-only" title="Corrigir (-1)">
-                                <RotateCcw size={14} />
-                             </button>
+                             <button onClick={() => handleAction('DRINK')} className="btn-glass-small" style={{ flex: 1, justifyContent: 'center' }}><Plus size={16} /> Shot</button>
+                             <button onClick={() => handleAction('UNDO_DRINK')} className="btn-icon-only" title="Corrigir (-1)"><RotateCcw size={14} /></button>
                         </div>
                     )}
                 </div>
-
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, PlusCircle, LayoutDashboard, LogIn, Image, Users } from 'lucide-react'; // Importar Users
+import { LogOut, PlusCircle, LayoutDashboard, LogIn, Image, Users, Beer } from 'lucide-react'; // Adicionado 'Beer'
 import { supabase } from '../lib/supabaseClient';
 import logo from '../assets/logo-ab.png';
 
@@ -12,7 +12,17 @@ export default function Navbar({ session }) {
   };
 
   const navItemStyle = {
-    color: 'white', textDecoration: 'none', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem'
+    color: 'white', 
+    textDecoration: 'none', 
+    fontWeight: '700', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '6px', 
+    fontSize: '0.9rem', 
+    background: 'transparent', 
+    border: 'none', 
+    cursor: 'pointer', 
+    padding: '0.5rem'
   };
 
   return (
@@ -25,8 +35,14 @@ export default function Navbar({ session }) {
         
         <div className="navbar-links" style={{ gap: '0.25rem', alignItems: 'center' }}>
           
+          {/* Link para o Álbum */}
           <Link to="/album" style={navItemStyle} className="hover:opacity-80 transition-opacity">
             <Image size={18}/> <span>Álbum</span>
+          </Link>
+
+          {/* NOVO: Link para a Liga dos Copos (Noitadas) */}
+          <Link to="/night" style={navItemStyle} className="hover:opacity-80 transition-opacity">
+            <Beer size={18}/> <span className="hidden sm:inline">Copos</span>
           </Link>
 
           {session ? (
@@ -35,7 +51,7 @@ export default function Navbar({ session }) {
                 <LayoutDashboard size={18}/> <span className="hidden sm:inline">Dashboard</span>
               </Link>
 
-              {/* NOVO LINK: Membros */}
+              {/* Link para Gestão de Membros */}
               <Link to="/members" style={navItemStyle} className="hover:opacity-80 transition-opacity">
                 <Users size={18}/> <span className="hidden sm:inline">Membros</span>
               </Link>

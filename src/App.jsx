@@ -8,7 +8,8 @@ import CreateEvent from './pages/CreateEvent';
 import EventDetails from './pages/EventDetails';
 import Album from './pages/Album';
 import Members from './pages/Members';
-import MemberProfile from './pages/MemberProfile'; // <--- 1. IMPORTAR
+import MemberProfile from './pages/MemberProfile';
+import NightStats from './pages/NightStats'; 
 
 function App() {
   const [session, setSession] = useState(null);
@@ -31,6 +32,7 @@ function App() {
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/create" element={session ? <CreateEvent session={session} /> : <Navigate to="/login" />} />
           <Route path="/event/:id" element={<EventDetails session={session} />} />
+          <Route path="/nightstats" element={<NightStats session={session} />} />
         </Routes>
       </div>
     </HashRouter>
