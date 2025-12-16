@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, PlusCircle, LogIn, Image, Users, Beer } from 'lucide-react'; // Removi LayoutDashboard
+import { LogOut, PlusCircle, LogIn, Image, Users, Beer } from 'lucide-react'; 
 import { supabase } from '../lib/supabaseClient';
 import logo from '../assets/logo-ab.png';
 
@@ -29,29 +29,28 @@ export default function Navbar({ session }) {
 
   return (
     <nav className="navbar">
-      <div className="navbar-content container" style={{ padding: '0.5rem 1rem' }}>
+      {/* Padding ajustado para alinhar com o conteúdo da página */}
+      <div className="navbar-content container" style={{ padding: '0.5rem 1.5rem' }}>
         
-        {/* Adicionei a classe 'brand-mobile-hidden' para esconder no telemóvel */}
-        <Link to="/" className="navbar-brand brand-mobile-hidden">
+        {/* LOGÓTIPO: Agora visível em todos os ecrãs */}
+        <Link to="/" className="navbar-brand">
           <img src={logo} alt="AB Logo" className="brand-logo-img" />
           <span className="brand-text">tracker</span>
         </Link>
         
-        {/* No telemóvel, os links vão ocupar a largura toda e ficar centrados */}
-        <div className="navbar-links" style={{ gap: '0.25rem', alignItems: 'center', width: '100%', justifyContent: 'center' }}>
+        {/* LINKS: Alinhados à direita automaticamente pelo CSS flexbox */}
+        <div className="navbar-links" style={{ gap: '0.25rem', alignItems: 'center' }}>
           
           <Link to="/album" style={navItemStyle} className="hover:opacity-80 transition-opacity">
             <Image size={18}/> <span>Álbum</span>
           </Link>
 
           <Link to="/night" style={navItemStyle} className="hover:opacity-80 transition-opacity">
-            <Beer size={18}/> <span className="hidden sm:inline">Copos</span>
+            <Beer size={18}/> <span className="hidden sm:inline">Noites</span>
           </Link>
 
           {session ? (
             <>
-              {/* O LINK DASHBOARD FOI REMOVIDO DAQUI */}
-
               <Link to="/members" style={navItemStyle} className="hover:opacity-80 transition-opacity">
                 <Users size={18}/> <span className="hidden sm:inline">Membros</span>
               </Link>

@@ -1,6 +1,5 @@
 /* Base e Variáveis - Paleta ABtracker */
 :root {
-    /* MUDANÇA PRINCIPAL: De Roxo para Vermelho do Logo */
     --color-primary: #ef4444;      /* Vermelho Vibrante (Logo) */
     --color-primary-dark: #dc2626; /* Vermelho mais escuro (Hover) */
     --color-primary-light: #fee2e2;/* Vermelho muito claro (Fundos suaves) */
@@ -32,7 +31,7 @@ body {
 
 /* 1. Estrutura Geral */
 .container {
-    max-width: 1400px; /* Aumentei um pouco para caberem 3 colunas à vontade */
+    max-width: 1400px;
     margin: 0 auto;
     padding: 1.5rem;
 }
@@ -42,7 +41,8 @@ body {
     background-color: var(--color-primary);
     color: white;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 0.5rem 1rem;
+    /* Padding vertical apenas, o horizontal é gerido no componente */
+    padding: 0.5rem 0; 
     position: sticky;
     top: 0;
     z-index: 50;
@@ -50,7 +50,7 @@ body {
 
 .navbar-content {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* ESQUERDA (Logo) ----- DIREITA (Links) */
     align-items: center;
     max-width: 1400px;
     margin: 0 auto;
@@ -83,14 +83,18 @@ body {
 
 .navbar-links {
     display: flex;
-    gap: 1rem;
+    gap: 0.25rem;
     align-items: center;
 }
 
+/* COMPORTAMENTO MOBILE */
 @media (max-width: 640px) {
+    /* Apenas esconde o texto dos botões para caberem todos os ícones */
     .hidden.sm\:inline {
         display: none;
     }
+    
+    /* A estrutura mantém-se igual ao PC: Logo Esq | Links Dir */
 }
 
 .btn-new-event {
@@ -349,25 +353,19 @@ body {
 
 /* AJUSTES ESPECÍFICOS PARA MOBILE (Tabela Centrada) */
 @media (max-width: 1023px) {
-    /* Forçar a tabela a centrar o texto */
     table th, table td {
         text-align: center !important;
     }
-
-    /* Ajustar a primeira coluna (Nome + Medalha) para alinhar ao centro */
     table td:first-child, table th:first-child {
         padding-left: 0.5rem;
     }
-    
-    /* Garantir que o container da tabela ocupa a largura toda e centra-se */
     .dashboard-grid > div:first-child {
         width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
     }
-    
     .dashboard-grid > div:first-child > div {
-        width: 100%; /* A caixa branca da tabela */
+        width: 100%;
     }
 }
