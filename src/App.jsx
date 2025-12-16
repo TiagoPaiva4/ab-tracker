@@ -24,7 +24,7 @@ function App() {
       <div className="min-h-screen bg-slate-50 pb-10">
         <Navbar session={session} />
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Dashboard session={session} />} />
           <Route path="/album" element={<Album />} />
           <Route path="/members" element={session ? <Members session={session} /> : <Navigate to="/login" />} />
           <Route path="/profile/:name" element={<MemberProfile />} /> {/* <--- 2. NOVA ROTA */}
