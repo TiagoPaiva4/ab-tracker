@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, PlusCircle, LayoutDashboard, LogIn, Image, Users, Beer } from 'lucide-react'; // Adicionado 'Beer'
+import { LogOut, PlusCircle, LayoutDashboard, LogIn, Image, Users, Beer } from 'lucide-react'; 
 import { supabase } from '../lib/supabaseClient';
 import logo from '../assets/logo-ab.png';
 
@@ -7,22 +7,18 @@ export default function Navbar({ session }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // 1. Tenta fazer logout no Supabase
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Erro ao sair:', error);
+
+    // 2. Força a atualização da página para limpar estados presos na memória
+    // Isto resolve 99% dos problemas de "não consigo sair"
     navigate('/login');
+    window.location.reload(); 
   };
 
   const navItemStyle = {
-    color: 'white', 
-    textDecoration: 'none', 
-    fontWeight: '700', 
-    display: 'flex', 
-    alignItems: 'center', 
-    gap: '6px', 
-    fontSize: '0.9rem', 
-    background: 'transparent', 
-    border: 'none', 
-    cursor: 'pointer', 
-    padding: '0.5rem'
+    color: 'white', textDecoration: 'none', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem'
   };
 
   return (
@@ -35,12 +31,10 @@ export default function Navbar({ session }) {
         
         <div className="navbar-links" style={{ gap: '0.25rem', alignItems: 'center' }}>
           
-          {/* Link para o Álbum */}
           <Link to="/album" style={navItemStyle} className="hover:opacity-80 transition-opacity">
             <Image size={18}/> <span>Álbum</span>
           </Link>
 
-          {/* NOVO: Link para a Liga dos Copos (Noitadas) */}
           <Link to="/night" style={navItemStyle} className="hover:opacity-80 transition-opacity">
             <Beer size={18}/> <span className="hidden sm:inline">Copos</span>
           </Link>
@@ -51,7 +45,6 @@ export default function Navbar({ session }) {
                 <LayoutDashboard size={18}/> <span className="hidden sm:inline">Dashboard</span>
               </Link>
 
-              {/* Link para Gestão de Membros */}
               <Link to="/members" style={navItemStyle} className="hover:opacity-80 transition-opacity">
                 <Users size={18}/> <span className="hidden sm:inline">Membros</span>
               </Link>
