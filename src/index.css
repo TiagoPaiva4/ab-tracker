@@ -32,7 +32,7 @@ body {
 
 /* 1. Estrutura Geral */
 .container {
-    max-width: 1200px;
+    max-width: 1400px; /* Aumentei um pouco para caberem 3 colunas à vontade */
     margin: 0 auto;
     padding: 1.5rem;
 }
@@ -42,7 +42,7 @@ body {
     background-color: var(--color-primary);
     color: white;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 0.5rem 1rem; /* Reduzi um pouco o padding vertical para caber o logo */
+    padding: 0.5rem 1rem;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -52,42 +52,41 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-/* Estilos do Novo Logo Vertical */
 .navbar-brand {
     display: flex;
-    flex-direction: column; /* Empilha: Imagem em cima, Texto em baixo */
-    align-items: center;    /* Centra tudo */
+    flex-direction: column;
+    align-items: center;
     text-decoration: none;
-    line-height: 1;         /* Remove espaço extra entre linhas */
+    line-height: 1;
     gap: 2px;
 }
 
 .brand-logo-img {
-    height: 32px;           /* Tamanho do quadrado AB */
+    height: 32px;
     width: auto;
-    border-radius: 6px;     /* Arredonda ligeiramente os cantos do logo */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Sombra para destacar do fundo vermelho */
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .brand-text {
-    font-size: 0.7rem;      /* Texto pequeno */
-    font-weight: 700;       /* Bold */
+    font-size: 0.7rem;
+    font-weight: 700;
     color: white;
-    text-transform: uppercase; /* TRACKER em maiúsculas fica melhor */
-    letter-spacing: 0.1em;  /* Espaçamento entre letras */
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     opacity: 0.9;
 }
 
-/* Ajustes nos links para alinhar com o novo logo */
 .navbar-links {
     display: flex;
     gap: 1rem;
     align-items: center;
 }
 
-/* Esconder texto em telemóveis muito pequenos para poupar espaço */
 @media (max-width: 640px) {
     .hidden.sm\:inline {
         display: none;
@@ -96,7 +95,7 @@ body {
 
 .btn-new-event {
     background-color: white;
-    color: var(--color-primary); /* Texto vermelho */
+    color: var(--color-primary);
     padding: 0.5rem 1rem;
     border-radius: 9999px;
     font-weight: 700;
@@ -116,7 +115,7 @@ body {
 .form-container {
     background-color: white;
     padding: 2rem;
-    border-radius: 1rem; /* Cantos mais redondos */
+    border-radius: 1rem;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--color-border);
     max-width: 450px;
@@ -136,7 +135,7 @@ body {
 .input-field:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px var(--color-primary-light); /* Anel vermelho suave */
+    box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .btn-primary {
@@ -226,22 +225,44 @@ body {
     color: var(--color-primary);
 }
 
-/* 5. Layout Dashboard (Tabela vs Eventos) */
+/* 5. Layout Dashboard (RESPONSIVO COM 3 COLUNAS) */
+
+/* Mobile First: Tudo empilhado */
 .dashboard-grid {
     display: flex;
     flex-direction: column;
     gap: 2rem;
 }
 
-@media (min-width: 1024px) {
+/* Ecrãs Grandes (PC): 3 Colunas (Tabela | Eventos | Membros) */
+@media (min-width: 1200px) {
     .dashboard-grid {
         display: grid;
-        grid-template-columns: 350px 1fr; 
+        grid-template-columns: 320px 1fr 260px; /* Esquerda Fixa | Centro Flexível | Direita Fixa */
         align-items: start;
-        gap: 3rem;
+        gap: 2rem;
     }
+    
+    /* Quando há 3 colunas, os eventos adaptam-se */
     .events-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 colunas de eventos no layout com tabela */
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+/* Tablets e Laptops Pequenos: 2 Colunas (Tabela | Eventos) - Membros vão para baixo */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2rem;
+    }
+    /* Neste caso, a coluna de membros vai ocupar a largura total em baixo */
+    .dashboard-grid > div:last-child {
+        grid-column: 1 / -1; 
+    }
+    .dashboard-grid > div:last-child > div > div {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Grelha de membros */
     }
 }
 
@@ -314,6 +335,17 @@ body {
     background-color: #fecaca;
 }
 
+/* Helpers */
+.flex-center { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+.text-center { text-align: center; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mr-2 { margin-right: 0.5rem; }
+.text-sm { font-size: 0.875rem; }
+.font-semibold { font-weight: 600; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.text-slate-400 { color: #9ca3af; }
+.event-layout { display: grid; gap: 2rem; }
+@media (min-width: 768px) { .event-layout { grid-template-columns: 2fr 1fr; } }
 
 /* AJUSTES ESPECÍFICOS PARA MOBILE (Tabela Centrada) */
 @media (max-width: 1023px) {
@@ -323,8 +355,6 @@ body {
     }
 
     /* Ajustar a primeira coluna (Nome + Medalha) para alinhar ao centro */
-    /* Como o emoji e o nome são texto, o text-align center acima deve tratar de tudo,
-       mas vamos garantir que o padding não atrapalha */
     table td:first-child, table th:first-child {
         padding-left: 0.5rem;
     }
@@ -341,15 +371,3 @@ body {
         width: 100%; /* A caixa branca da tabela */
     }
 }
-
-/* Helpers */
-.flex-center { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
-.text-center { text-align: center; }
-.mb-6 { margin-bottom: 1.5rem; }
-.mr-2 { margin-right: 0.5rem; }
-.text-sm { font-size: 0.875rem; }
-.font-semibold { font-weight: 600; }
-.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-.text-slate-400 { color: #9ca3af; }
-.event-layout { display: grid; gap: 2rem; }
-@media (min-width: 768px) { .event-layout { grid-template-columns: 2fr 1fr; } }

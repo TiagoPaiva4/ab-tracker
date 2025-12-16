@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { Link } from 'react-router-dom'; // Importar Link
 import { Users, Trash2, UserPlus } from 'lucide-react';
 
 export default function Members({ session }) {
@@ -60,7 +61,7 @@ export default function Members({ session }) {
 
   return (
     <div className="container">
-      {/* Estilos locais para o botão de eliminar */}
+      {/* Estilos locais */}
       <style>{`
         .member-card {
           position: relative;
@@ -82,13 +83,13 @@ export default function Members({ session }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ef4444; /* Vermelho da marca */
+          color: #ef4444;
           cursor: pointer;
           transition: all 0.2s;
-          opacity: 0; /* Invisível por defeito */
+          opacity: 0;
           transform: scale(0.8);
+          z-index: 10; /* Garante que fica por cima do link */
         }
-        /* No telemóvel mostra sempre, no PC só no hover */
         @media (max-width: 768px) {
             .btn-delete-member { opacity: 1; transform: scale(1); }
         }
@@ -132,11 +133,15 @@ export default function Members({ session }) {
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
-            gap: '1.5rem', 
-            marginTop: '50px'
+            gap: '1.5rem',
+            marginTop: '30px'
           }}>
             {members.map(member => (
-              <div key={member.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center member-card">
+              <Link 
+                to={`/profile/${member.name}`}
+                key={member.id} 
+                className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center member-card cursor-pointer no-underline"
+              >
                 
                 {/* Avatar */}
                 <div style={{
@@ -159,15 +164,19 @@ export default function Members({ session }) {
                 {/* Nome */}
                 <span className="font-bold text-slate-700 text-center">{member.name}</span>
 
-                {/* Botão de Apagar (Estilizado) */}
+                {/* Botão de Apagar (com preventDefault para não abrir o perfil) */}
                 <button 
-                  onClick={() => deleteMember(member.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    deleteMember(member.id);
+                  }}
                   className="btn-delete-member"
                   title="Remover"
                 >
                   <Trash2 size={16} />
                 </button>
-              </div>
+              </Link>
             ))}
             
             {members.length === 0 && (

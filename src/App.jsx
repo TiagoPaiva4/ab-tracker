@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// 1. Mudar de BrowserRouter para HashRouter
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'; 
 import { supabase } from './lib/supabaseClient';
 import Navbar from './components/Navbar';
@@ -9,6 +8,7 @@ import CreateEvent from './pages/CreateEvent';
 import EventDetails from './pages/EventDetails';
 import Album from './pages/Album';
 import Members from './pages/Members';
+import MemberProfile from './pages/MemberProfile'; // <--- 1. IMPORTAR
 
 function App() {
   const [session, setSession] = useState(null);
@@ -20,14 +20,14 @@ function App() {
   }, []);
 
   return (
-    // 2. Usar HashRouter aqui
-    <HashRouter> 
+    <HashRouter>
       <div className="min-h-screen bg-slate-50 pb-10">
         <Navbar session={session} />
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/album" element={<Album />} />
           <Route path="/members" element={session ? <Members session={session} /> : <Navigate to="/login" />} />
+          <Route path="/profile/:name" element={<MemberProfile />} /> {/* <--- 2. NOVA ROTA */}
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
           <Route path="/create" element={session ? <CreateEvent session={session} /> : <Navigate to="/login" />} />
           <Route path="/event/:id" element={<EventDetails session={session} />} />

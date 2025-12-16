@@ -3,9 +3,16 @@ import { supabase } from '../lib/supabaseClient';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, Trophy, ChevronDown } from 'lucide-react';
 
+const GROUP_MEMBERS = [
+  "Paiva", "André Nuno", "André Carvalho", "Gui Costa",
+  "Didi", "JP", "Emídio", "Pedro",
+  "Passinhas", "Adri", "Edu", "Gustavo"
+];
+
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [allMembers, setAllMembers] = useState([]); // Nova lista para a barra lateral
   const [visibleCount, setVisibleCount] = useState(9);
 
   useEffect(() => {
@@ -13,9 +20,11 @@ export default function Dashboard() {
   }, []);
 
   const fetchData = async () => {
-    // 1. Buscar membros para a base do Ranking
-    const { data: members } = await supabase.from('members').select('name');
+    // 1. Buscar membros (para o Ranking e para a Lista Lateral)
+    const { data: members } = await supabase.from('members').select('*').order('name');
     const memberNames = members ? members.map(m => m.name) : [];
+    
+    if (members) setAllMembers(members); // Guardar a lista completa com IDs
 
     // 2. Buscar Eventos e Participantes
     const { data: eventsData } = await supabase
@@ -25,21 +34,18 @@ export default function Dashboard() {
       
     if (eventsData) {
       setEvents(eventsData);
-      calculateLeaderboard(eventsData, memberNames);
+      calculateLeaderboard(eventsData, memberNames.length > 0 ? memberNames : GROUP_MEMBERS);
     }
   };
 
-  const calculateLeaderboard = (eventsData, allMembers) => {
+  const calculateLeaderboard = (eventsData, allMemberNames) => {
     const counts = {};
-    
-    // Inicializar todos os membros da BD com 0
-    allMembers.forEach(name => counts[name] = 0);
+    allMemberNames.forEach(name => counts[name] = 0);
 
     eventsData.forEach(event => {
       if (event.attendees) {
         event.attendees.forEach(att => {
           if (att.status === 'Presente') {
-            // Soma ao existente ou cria novo se for um nome antigo que já não está na tabela members
             counts[att.name] = (counts[att.name] || 0) + 1;
           }
         });
@@ -57,10 +63,28 @@ export default function Dashboard() {
     setVisibleCount(prev => prev + 9);
   };
 
+  // Funções Visuais para os Avatares (Iguais às outras páginas)
+  const getInitials = (n) => {
+    const names = n.trim().split(' ');
+    if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  };
+
+  const getAvatarColor = (n) => {
+    const colors = ['#fee2e2', '#e0e7ff', '#d1fae5', '#fef3c7', '#fae8ff', '#ecfeff'];
+    return colors[n.length % colors.length];
+  };
+
+  const getAvatarTextColor = (n) => {
+    const colors = ['#ef4444', '#4f46e5', '#10b981', '#d97706', '#d946ef', '#0891b2'];
+    return colors[n.length % colors.length];
+  };
+
   return (
     <div className="container">
       <div className="dashboard-grid">
-        {/* COLUNA ESQUERDA: Tabela */}
+        
+        {/* COLUNA 1: Tabela de Ranking */}
         <div>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Trophy className="text-yellow-500" /> Tabela de Assiduidade
@@ -79,12 +103,9 @@ export default function Dashboard() {
                   {leaderboard.map((item, index) => {
                     const totalEvents = events.length || 1; 
                     const percentage = Math.round((item.count / totalEvents) * 100);
-                    
                     let rowClass = "hover:bg-slate-50 transition";
                     let badge = null;
-                    if (index === 0) badge = "🥇";
-                    else if (index === 1) badge = "🥈";
-                    else if (index === 2) badge = "🥉";
+                    if (index === 0) badge = "🥇"; else if (index === 1) badge = "🥈"; else if (index === 2) badge = "🥉";
 
                     return (
                       <tr key={item.name} className={rowClass}>
@@ -106,15 +127,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* COLUNA DIREITA: Lista de Eventos */}
+        {/* COLUNA 2: Lista de Eventos */}
         <div>
           <h1 className="text-2xl font-bold mb-6">Eventos Recentes</h1>
           <div className="events-grid">
             {events.slice(0, visibleCount).map((event) => {
-              const presentCount = event.attendees 
-                ? event.attendees.filter(a => a.status === 'Presente').length 
-                : 0;
-
+              const presentCount = event.attendees ? event.attendees.filter(a => a.status === 'Presente').length : 0;
               return (
                 <div key={event.id} className="event-card">
                   {event.photos && event.photos[0] && (
@@ -128,8 +146,7 @@ export default function Dashboard() {
                         {new Date(event.event_date).toLocaleDateString('pt-PT')}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.25rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                        <Users size={14} />
-                        <span>{presentCount}</span>
+                        <Users size={14} /><span>{presentCount}</span>
                       </div>
                     </div>
                     <Link to={`/event/${event.id}`} className="btn-details">Ver Detalhes</Link>
@@ -146,6 +163,42 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* COLUNA 3: Lista de Membros (NOVA) */}
+        <div>
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Users className="text-blue-500" /> Membros
+          </h2>
+          <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden p-2">
+            <div className="flex flex-col gap-1">
+              {allMembers.map((member) => (
+                <Link 
+                  key={member.id} 
+                  to={`/profile/${member.name}`}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-slate-700 hover:text-slate-900 no-underline"
+                >
+                  {/* Avatar Pequeno */}
+                  <div style={{
+                    width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                    backgroundColor: getAvatarColor(member.name), color: getAvatarTextColor(member.name),
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.75rem', fontWeight: '800'
+                  }}>
+                    {getInitials(member.name)}
+                  </div>
+                  
+                  {/* Nome */}
+                  <span className="font-medium text-sm truncate">{member.name}</span>
+                </Link>
+              ))}
+              
+              {allMembers.length === 0 && (
+                <p className="text-center text-xs text-slate-400 p-2">A carregar...</p>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
