@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Calendar, Trophy, Flame, ArrowLeft, History, XCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Trophy, Flame, ArrowLeft, History, CheckCircle } from 'lucide-react';
 
 export default function MemberProfile() {
-  const { name } = useParams(); // Vamos buscar o nome pelo link (URL)
+  const { name } = useParams();
   const navigate = useNavigate();
   
   const [stats, setStats] = useState({ total: 0, present: 0, streak: 0, percentage: 0 });
@@ -16,13 +16,13 @@ export default function MemberProfile() {
   }, [name]);
 
   const fetchMemberData = async () => {
-    // 1. Buscar todos os eventos (para ter a ordem cronológica)
+    // 1. Buscar eventos com FOTOS
     const { data: allEvents } = await supabase
       .from('events')
-      .select('id, title, event_date')
-      .order('event_date', { ascending: false }); // Do mais recente para o antigo
+      .select('id, title, event_date, photos')
+      .order('event_date', { ascending: false });
 
-    // 2. Buscar todas as presenças deste membro
+    // 2. Buscar presenças
     const { data: memberAttendance } = await supabase
       .from('attendees')
       .select('event_id, status')
@@ -35,7 +35,6 @@ export default function MemberProfile() {
   };
 
   const processStats = (events, attendance) => {
-    // Criar um mapa rápido: ID do Evento -> Status ("Presente"/"Ausente")
     const attendanceMap = {};
     attendance.forEach(a => attendanceMap[a.event_id] = a.status);
 
@@ -45,27 +44,29 @@ export default function MemberProfile() {
     const historyList = [];
 
     events.forEach(event => {
-      const status = attendanceMap[event.id] || 'N/A'; // Se não estiver na lista, conta como N/A
+      const status = attendanceMap[event.id] || 'N/A'; 
       
-      // Contar totais
+      // Calcular estatísticas (baseado em TODOS os eventos)
       if (status === 'Presente') presentCount++;
 
-      // Calcular Streak (só conta se for consecutivo a partir de hoje)
       if (!streakBroken) {
         if (status === 'Presente') {
           streak++;
         } else {
-          // Se faltou ou não estava inscrito no evento mais recente, quebra a streak
           streakBroken = true;
         }
       }
 
-      // Adicionar ao histórico visual
-      historyList.push({
-        event: event.title,
-        date: event.event_date,
-        status: status
-      });
+      // FILTRO: Só adicionar à lista visual se estiver "Presente"
+      if (status === 'Presente') {
+        historyList.push({
+          id: event.id,
+          title: event.title,
+          date: event.event_date,
+          photos: event.photos,
+          status: status
+        });
+      }
     });
 
     setStats({
@@ -98,18 +99,53 @@ export default function MemberProfile() {
   if (loading) return <div className="text-center py-10">A carregar perfil...</div>;
 
   return (
-    <div className="container" style={{ maxWidth: '800px' }}>
+    <div className="container" style={{ maxWidth: '1000px' }}>
       
+      <style>{`
+        .btn-back {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: none;
+          border: none;
+          color: var(--color-text-light);
+          font-weight: 600;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-bottom: 1.5rem;
+          padding: 0.5rem 0;
+        }
+        .btn-back:hover {
+          color: var(--color-primary);
+          transform: translateX(-3px);
+        }
+        .stats-container {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            padding: 1rem 0;
+        }
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            padding: 0 1rem;
+            border-right: 1px solid #f1f5f9;
+        }
+        .stat-item:last-child {
+            border-right: none;
+        }
+      `}</style>
+
       {/* Botão Voltar */}
-      <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-slate-500 hover:text-slate-800 transition font-medium">
+      <button onClick={() => navigate(-1)} className="btn-back">
         <ArrowLeft size={20} /> Voltar
       </button>
 
       {/* Cartão de Perfil */}
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-8">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden mb-10">
         <div className="bg-slate-50 p-8 flex flex-col items-center border-b border-slate-100">
           
-          {/* Avatar Grande */}
           <div style={{
             width: '100px', height: '100px', borderRadius: '50%',
             backgroundColor: getAvatarColor(name), color: getAvatarTextColor(name),
@@ -125,20 +161,20 @@ export default function MemberProfile() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-3 divide-x divide-slate-100">
-          <div className="p-6 text-center">
+        <div className="stats-container">
+          <div className="stat-item">
             <div className="flex justify-center mb-2 text-yellow-500"><Trophy size={28} /></div>
             <div className="text-2xl font-bold text-slate-800">{stats.present}</div>
             <div className="text-xs text-slate-400 uppercase tracking-wider font-bold">Presenças</div>
           </div>
           
-          <div className="p-6 text-center">
+          <div className="stat-item">
             <div className="flex justify-center mb-2 text-orange-500"><Flame size={28} /></div>
             <div className="text-2xl font-bold text-slate-800">{stats.streak}</div>
             <div className="text-xs text-slate-400 uppercase tracking-wider font-bold">Streak Atual</div>
           </div>
 
-          <div className="p-6 text-center">
+          <div className="stat-item">
             <div className="flex justify-center mb-2 text-blue-500"><History size={28} /></div>
             <div className="text-2xl font-bold text-slate-800">{stats.percentage}%</div>
             <div className="text-xs text-slate-400 uppercase tracking-wider font-bold">Assiduidade</div>
@@ -146,33 +182,53 @@ export default function MemberProfile() {
         </div>
       </div>
 
-      {/* Histórico de Eventos */}
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Calendar className="text-slate-400" /> Histórico de Eventos
+      {/* Histórico de Eventos (FILTRADO: Só mostra "Presente") */}
+      <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <Calendar className="text-slate-400" /> Eventos Participados
       </h2>
       
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="divide-y divide-slate-100">
-          {history.map((item, index) => (
-            <div key={index} className="p-4 flex items-center justify-between hover:bg-slate-50 transition">
-              <div>
-                <p className="font-semibold text-slate-700">{item.event}</p>
-                <p className="text-sm text-slate-400">{new Date(item.date).toLocaleDateString('pt-PT')}</p>
-              </div>
+      {history.length > 0 ? (
+        <div className="events-grid">
+          {history.map((event) => (
+            <div key={event.id} className="event-card">
               
-              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${
-                item.status === 'Presente' 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-red-50 text-red-400'
-              }`}>
-                {item.status === 'Presente' ? <CheckCircle size={14}/> : <XCircle size={14}/>}
-                {item.status === 'N/A' ? 'Não Registado' : item.status}
+              {/* Imagem do Evento */}
+              {event.photos && event.photos[0] && (
+                  <img src={event.photos[0]} alt="capa" className="event-card-image" />
+              )}
+              
+              <div className="event-card-content">
+                <h3 className="event-card-title">{event.title}</h3>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div className="event-card-date" style={{ marginBottom: 0 }}>
+                    <Calendar size={16} className="mr-2" />
+                    {new Date(event.date).toLocaleDateString('pt-PT')}
+                  </div>
+
+                  {/* Badge de Status (Sempre Verde agora, pois só mostramos os presentes) */}
+                  <div style={{ 
+                    display: 'flex', alignItems: 'center', gap: '0.25rem', 
+                    backgroundColor: '#d1fae5', 
+                    color: '#065f46', 
+                    padding: '0.25rem 0.75rem', borderRadius: '999px',
+                    fontSize: '0.75rem', fontWeight: 'bold'
+                  }}>
+                    <CheckCircle size={14}/>
+                    <span>Presente</span>
+                  </div>
+                </div>
+
+                <Link to={`/event/${event.id}`} className="btn-details">
+                  Ver Detalhes do Evento
+                </Link>
               </div>
             </div>
           ))}
         </div>
-      </div>
-
+      ) : (
+        <p className="text-center text-slate-400 py-10">Este membro ainda não participou em nenhum evento.</p>
+      )}
     </div>
   );
 }

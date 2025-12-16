@@ -12,7 +12,7 @@ const GROUP_MEMBERS = [
 export default function Dashboard() {
   const [events, setEvents] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
-  const [allMembers, setAllMembers] = useState([]); // Nova lista para a barra lateral
+  const [allMembers, setAllMembers] = useState([]); 
   const [visibleCount, setVisibleCount] = useState(9);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export default function Dashboard() {
     const { data: members } = await supabase.from('members').select('*').order('name');
     const memberNames = members ? members.map(m => m.name) : [];
     
-    if (members) setAllMembers(members); // Guardar a lista completa com IDs
+    if (members) setAllMembers(members);
 
     // 2. Buscar Eventos e Participantes
     const { data: eventsData } = await supabase
@@ -63,7 +63,7 @@ export default function Dashboard() {
     setVisibleCount(prev => prev + 9);
   };
 
-  // Funções Visuais para os Avatares (Iguais às outras páginas)
+  // Funções Visuais para os Avatares
   const getInitials = (n) => {
     const names = n.trim().split(' ');
     if (names.length === 1) return names[0].substring(0, 2).toUpperCase();
@@ -82,6 +82,14 @@ export default function Dashboard() {
 
   return (
     <div className="container">
+      {/* Pequeno CSS local para o efeito hover nos membros */}
+      <style>{`
+        .member-link-item:hover {
+          background-color: #f8fafc;
+          transform: translateX(4px);
+        }
+      `}</style>
+
       <div className="dashboard-grid">
         
         {/* COLUNA 1: Tabela de Ranking */}
@@ -164,31 +172,43 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* COLUNA 3: Lista de Membros (NOVA) */}
+        {/* COLUNA 3: Lista de Membros (CORRIGIDA) */}
         <div>
           <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Users className="text-blue-500" /> Membros
           </h2>
-          <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden p-2">
-            <div className="flex flex-col gap-1">
+          <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden p-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {allMembers.map((member) => (
                 <Link 
                   key={member.id} 
                   to={`/profile/${member.name}`}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-slate-700 hover:text-slate-900 no-underline"
+                  className="member-link-item"
+                  style={{
+                    display: 'flex',              // Força lado a lado
+                    alignItems: 'center',         // Alinha verticalmente
+                    gap: '1rem',                  // Espaço entre foto e nome
+                    textDecoration: 'none',       // Tira o sublinhado
+                    color: '#1f2937',             // Cor do texto (sem ser azul link)
+                    padding: '0.5rem',
+                    borderRadius: '0.5rem',
+                    transition: 'all 0.2s ease'
+                  }}
                 >
-                  {/* Avatar Pequeno */}
+                  {/* Avatar Maior (50px) */}
                   <div style={{
-                    width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                    width: '50px', height: '50px', borderRadius: '50%', flexShrink: 0,
                     backgroundColor: getAvatarColor(member.name), color: getAvatarTextColor(member.name),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.75rem', fontWeight: '800'
+                    fontSize: '1.2rem', fontWeight: '800'
                   }}>
                     {getInitials(member.name)}
                   </div>
                   
-                  {/* Nome */}
-                  <span className="font-medium text-sm truncate">{member.name}</span>
+                  {/* Nome Maior */}
+                  <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+                    {member.name}
+                  </span>
                 </Link>
               ))}
               
